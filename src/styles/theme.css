@@ -125,17 +125,31 @@
     @apply border-border outline-ring/50;
   }
 
-  html, body {
+  html,
+  body {
     @apply bg-background text-foreground;
     font-family: 'Clash Display', sans-serif;
     cursor: url('../imports/cursor_nav.png') 2 2, auto;
   }
 
-  a, button, [role="button"], input[type="submit"], input[type="button"], select, .cursor-pointer, [class*="cursor-pointer"], [onclick], input[type="range"], [tabindex] {
+  a,
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"],
+  select,
+  .cursor-pointer,
+  [class*="cursor-pointer"],
+  [onclick],
+  input[type="range"],
+  [tabindex] {
     cursor: url('../imports/cursor_click.png') 2 2, pointer !important;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: 'Cabinet Grotesk', sans-serif;
   }
 
@@ -275,6 +289,7 @@
     transform: translate(-2px, -2px);
     box-shadow: 6px 6px 0px 0px #000000;
   }
+
   &:active {
     transform: translate(2px, 2px);
     box-shadow: 2px 2px 0px 0px #000000;
@@ -283,6 +298,7 @@
 
 @utility neo-card-hover {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
   &:hover {
     transform: translate(-4px, -4px);
     box-shadow: 8px 8px 0px 0px #000000;
@@ -292,7 +308,7 @@
 
 @utility neo-grid-bg {
   background-color: #ffffff;
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(0, 0, 0, 0.1) 2px, transparent 2px),
     linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 2px, transparent 2px);
   background-size: 40px 40px;
@@ -300,11 +316,8 @@
 
 @utility neo-grid-dark {
   background-color: #000000;
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.08) 2px, transparent 2px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 2px, transparent 2px);
   background-size: 40px 40px;
 }
-
-
-
