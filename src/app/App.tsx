@@ -9,7 +9,8 @@ import {
   Car, Compass, Puzzle, Swords, Music, Ghost,
   Building2, Globe, Joystick, Upload, ShieldCheck,
   Trash2, ToggleLeft, ToggleRight, Package, Eye, EyeOff,
-  CheckCircle2, AlertCircle, FolderOpen, Settings, Pencil, Database
+  CheckCircle2, AlertCircle, FolderOpen, Settings, Pencil, Database,
+  Dices, Minimize2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { supabase } from "@/lib/supabaseClient";
@@ -65,17 +66,34 @@ interface UploadEntry {
 
 const GAMES: Game[] = [];
 
-const CATEGORIES = [
-  { name: "Action", icon: Swords, count: 1240, color: "#EF4444" },
-  { name: "Adventure", icon: Compass, count: 842, color: "#F59E0B" },
-  { name: "Puzzle", icon: Puzzle, count: 1680, color: "#8B5CF6" },
-  { name: "Racing", icon: Car, count: 560, color: "#3B82F6" },
-  { name: "Horror", icon: Ghost, count: 310, color: "#6B7280" },
-  { name: "Sports", icon: Trophy, count: 740, color: "#22C55E" },
-  { name: "Arcade", icon: Joystick, count: 920, color: "#F97316" },
-  { name: "Casual", icon: Music, count: 1440, color: "#EC4899" },
-  { name: "Multiplayer", icon: Users, count: 380, color: "#06B6D4" },
-  { name: "Simulation", icon: Building2, count: 490, color: "#10B981" },
+export const ALL_CATEGORIES = [
+  { name: "Action", icon: Swords, color: "#EF4444" },
+  { name: "Adventure", icon: Compass, color: "#F59E0B" },
+  { name: "Puzzle", icon: Puzzle, color: "#8B5CF6" },
+  { name: "Racing", icon: Car, color: "#3B82F6" },
+  { name: "Shooting", icon: Trophy, color: "#EC4899" },
+  { name: "Strategy", icon: Building2, color: "#10B981" },
+  { name: "Arcade", icon: Joystick, color: "#F97316" },
+  { name: "Horror", icon: Ghost, color: "#6B7280" },
+  { name: "Sports", icon: Trophy, color: "#22C55E" },
+  { name: "Casual", icon: Music, color: "#EC4899" },
+  { name: "Multiplayer", icon: Users, color: "#06B6D4" },
+  { name: "Simulation", icon: Building2, color: "#10B981" },
+];
+
+const GENRE_OPTIONS = [
+  "Action",
+  "Adventure",
+  "Puzzle",
+  "Racing",
+  "Shooting",
+  "Strategy",
+  "Arcade",
+  "Horror",
+  "Sports",
+  "Casual",
+  "Multiplayer",
+  "Simulation",
 ];
 
 const RECOMMENDED: any[] = [];
@@ -114,63 +132,97 @@ function GameCard({
   onToggleFavorite?: (id: number) => void;
 }) {
   return (
-    <div
-      className="bg-white rounded-none overflow-hidden cursor-pointer group border-3 border-black neo-shadow neo-card-hover transition-all duration-200"
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+      className="bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-teal-500/50 shadow-sm hover:shadow-md transition-all flex flex-col group"
     >
+      {/* Thumbnail Area */}
       <div
-        className="h-36 flex items-center justify-center text-6xl relative overflow-hidden border-b-3 border-black"
-        style={{ background: `linear-gradient(135deg, ${game.color}22 0%, ${game.color}44 100%)` }}
+        onClick={() => onPlay(game)}
+        className="h-40 w-full relative overflow-hidden bg-slate-100 cursor-pointer"
       >
         {game.thumbnailUrl ? (
-          <img src={game.thumbnailUrl} alt={game.title} className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:rotate-1" />
+          <img
+            src={game.thumbnailUrl}
+            alt={game.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
         ) : (
-          <motion.span whileHover={{ scale: 1.15 }} transition={{ duration: 0.2 }}>
-            {game.emoji}
-          </motion.span>
+          <div
+            className="w-full h-full flex items-center justify-center text-5xl"
+            style={{ background: `linear-gradient(135deg, ${game.color}25 0%, ${game.color}55 100%)` }}
+          >
+            <span>{game.emoji}</span>
+          </div>
         )}
 
-        {!game.isUploaded && game.badge && (
-          <div className="absolute top-2 left-2">
-            <Badge type={game.badge} />
-          </div>
-        )}
+        {/* Action / Category Tag at top-left or badge */}
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+          <span className="bg-white/90 backdrop-blur-md text-[10px] font-semibold text-slate-700 uppercase px-2 py-0.5 rounded-md border border-slate-200 shadow-sm">
+            {game.genre}
+          </span>
+          {game.badge && (
+            <span className="bg-teal-50 text-teal-700 border border-teal-200 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md">
+              {game.badge}
+            </span>
+          )}
+        </div>
+
+        {/* Favorite button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite?.(game.id);
+          }}
+          className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-white/90 hover:bg-white backdrop-blur-md text-slate-500 border border-slate-200 shadow-sm transition-colors cursor-pointer"
+        >
+          <Heart
+            size={13}
+            className={isFavorite ? "fill-red-500 text-red-500" : "text-slate-400 hover:text-red-500"}
+          />
+        </button>
+
         {isAdmin && game.isUploaded && onAdminDelete && (
           <button
-            onClick={(e) => { e.stopPropagation(); onAdminDelete(game.id, game.isUploaded || false); toast.success("Game removed"); }}
-            className="absolute top-2 right-8 p-1.5 rounded-none border-2 border-black bg-red-500 hover:bg-red-600 transition-colors cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdminDelete(game.id, game.isUploaded || false);
+              toast.success("Game removed");
+            }}
+            className="absolute top-2.5 right-10 p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer"
           >
-            <Trash2 size={11} className="text-white" />
+            <Trash2 size={12} />
           </button>
         )}
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(game.id); }}
-          className="absolute top-2 right-2 p-1.5 rounded-none border-2 border-black bg-white hover:bg-primary transition-colors cursor-pointer"
-        >
-          <motion.div animate={{ scale: isFavorite ? [1, 1.4, 1] : 1 }} transition={{ duration: 0.3 }}>
-            <Heart size={14} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"} />
-          </motion.div>
-        </button>
       </div>
-      <div className="p-3">
-        <h3 className="font-bold text-black text-sm truncate">{game.title}</h3>
-        <p className="text-neutral-600 text-xs mt-0.5">{game.genre}</p>
-        <div className="flex items-center gap-2 mt-2">
-          <div className="flex items-center gap-1 bg-amber-400 text-black px-1.5 py-0.5 border-2 border-black text-[9px] font-black uppercase select-none">
-            <Star size={10} className="fill-black text-black" />
-            <span>{game.rating}</span>
-          </div>
-          <div className="flex items-center gap-1 bg-white text-black px-1.5 py-0.5 border-2 border-black text-[9px] font-black uppercase select-none">
-            <span>{game.plays} plays</span>
+
+      {/* Info Area */}
+      <div className="p-3.5 flex flex-col flex-1 justify-between">
+        <div>
+          <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-teal-600 transition-colors">
+            {game.title}
+          </h3>
+
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md text-[11px] font-medium text-amber-700">
+              <Star size={11} className="fill-amber-500 text-amber-500" />
+              <span>{game.rating}</span>
+            </div>
+            <div className="flex items-center gap-1 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600">
+              <span>{game.plays} PLAYS</span>
+            </div>
           </div>
         </div>
+
         <button
           onClick={() => onPlay(game)}
-          className="mt-3.5 w-full bg-primary text-black hover:bg-[#00D4C8] hover:text-black py-2.5 rounded-none text-xs font-black uppercase tracking-wider neo-btn neo-btn-hover flex items-center justify-center gap-1.5 cursor-pointer transition-colors duration-150"
+          className="mt-3 w-full bg-[#0D9488] hover:bg-[#0F766E] text-white py-2 rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
         >
-          <Play size={12} fill="currentColor" /> Play Now
+          Play Now
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -542,8 +594,6 @@ function HeroIllustration() {
 }
 
 // ─── Admin Panel ─────────────────────────────────────────────────────────────
-
-const GENRE_OPTIONS = ["Action", "Adventure", "Puzzle", "Racing", "Horror", "Sports", "Arcade", "Casual", "Multiplayer", "Simulation"];
 const EMOJI_OPTIONS = ["🎮", "🚀", "⚔️", "🏎️", "👻", "🧩", "🏆", "🎯", "🌊", "🔥", "🌿", "🎲", "🛸", "🦊", "🐉"];
 const COLOR_OPTIONS = ["#11B5A4", "#7C3AED", "#EF4444", "#F59E0B", "#3B82F6", "#EC4899", "#10B981", "#F97316", "#06B6D4", "#8B5CF6"];
 
@@ -1528,6 +1578,15 @@ function SignInView({
     <div className="min-h-[80vh] flex items-center justify-center p-6 relative text-foreground">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/5 pointer-events-none" />
       <div className="bg-card border-3 border-black rounded-none p-8 w-full max-w-md neo-shadow-lg relative z-10">
+        {/* Close Button to return home */}
+        <button
+          onClick={() => navigateTo("home")}
+          className="absolute top-4 right-4 p-2 border-2 border-black bg-white text-black hover:bg-primary transition-colors cursor-pointer rounded-none"
+          title="Close and return home"
+        >
+          <X size={18} />
+        </button>
+
         <div className="flex flex-col items-center mb-6">
           <div className="flex items-center gap-2 mb-1">
             <AzymarLogo size={36} />
@@ -1631,6 +1690,17 @@ function AccountView({
   return (
     <div className="min-h-[80vh] py-12 px-4 sm:px-6 max-w-5xl mx-auto space-y-8 relative text-foreground">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/5 pointer-events-none" />
+
+      {/* Top action bar with Close button */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => navigateTo("home")}
+          className="flex items-center gap-2 px-4 py-2 border-2 border-black bg-white text-black hover:bg-primary transition-colors cursor-pointer rounded-none text-xs font-black uppercase tracking-wider"
+          title="Close and return home"
+        >
+          <X size={16} /> Close & Return Home
+        </button>
+      </div>
       
       {/* Success banner */}
       <div className="bg-emerald-500/10 text-emerald-400 border-3 border-emerald-500 p-6 rounded-none flex items-center gap-4 neo-shadow">
@@ -1855,6 +1925,81 @@ export default function App() {
   const [playingGame, setPlayingGame] = useState<Game | null>(null);
   const [gameToRate, setGameToRate] = useState<Game | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [isRolling, setIsRolling] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (playerContainerRef.current?.requestFullscreen) {
+        playerContainerRef.current.requestFullscreen().catch(() => {
+          document.documentElement.requestFullscreen().catch(() => {});
+        });
+      } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
+
+  const handleExitGame = () => {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+    if (activePlayUrl) {
+      URL.revokeObjectURL(activePlayUrl);
+    }
+    setActivePlayUrl(null);
+    setGameToRate(playingGame);
+    setPlayingGame(null);
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activePlayUrl) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "f" || e.key === "F") {
+        const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+        if (tag !== "input" && tag !== "textarea") {
+          e.preventDefault();
+          toggleFullscreen();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activePlayUrl]);
+
+  const handleRandomGame = () => {
+    if (allGames.length === 0) {
+      toast.info("No games available to roll right now!");
+      return;
+    }
+    setIsRolling(true);
+    setTimeout(() => {
+      setIsRolling(false);
+      const randomIndex = Math.floor(Math.random() * allGames.length);
+      const picked = allGames[randomIndex];
+      toast.success(`🎲 Rolled: ${picked.title}!`);
+      setSelectedGame(picked);
+    }, 500);
+  };
 
   const handleSubmitRating = async (gameId: number, rating: number) => {
     let newRating = rating;
@@ -2005,20 +2150,12 @@ export default function App() {
     }
   }, [allGames.length]);
 
-  // Set page background image on load
+  // Clean white background style on load
   useEffect(() => {
-    document.body.style.backgroundImage = `linear-gradient(rgba(11, 9, 51, 0.75), rgba(7, 5, 36, 0.85)), url(${synthwaveBg})`;
-    document.body.style.backgroundAttachment = 'fixed';
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundRepeat = 'no-repeat';
-    document.body.style.backgroundColor = '#09071f';
+    document.body.style.backgroundImage = 'none';
+    document.body.style.backgroundColor = '#F8FAFC';
     return () => {
       document.body.style.backgroundImage = '';
-      document.body.style.backgroundAttachment = '';
-      document.body.style.backgroundSize = '';
-      document.body.style.backgroundPosition = '';
-      document.body.style.backgroundRepeat = '';
       document.body.style.backgroundColor = '';
     };
   }, []);
@@ -2138,8 +2275,24 @@ export default function App() {
   );
 
   const visibleGames = activeCategory
-    ? filteredGames.filter((g) => g.genre === activeCategory)
+    ? filteredGames.filter((g) => (g.genre || "").trim().toLowerCase() === activeCategory.trim().toLowerCase())
     : filteredGames;
+
+  // Dynamically compute category list and counts based on all uploaded / database games
+  const dynamicSidebarCategories = [
+    { name: "All Games", icon: Gamepad2, count: allGames.length },
+    ...ALL_CATEGORIES.map((cat) => ({
+      name: cat.name,
+      icon: cat.icon,
+      count: allGames.filter(
+        (g) => (g.genre || "").trim().toLowerCase() === cat.name.toLowerCase()
+      ).length,
+    })),
+  ];
+
+  const spotlightGame = allGames.length > 0
+    ? (allGames.find((g) => g.badge === "HOT" || g.badge === "TRENDING") || allGames[0])
+    : null;
 
 
 
@@ -2454,7 +2607,7 @@ export default function App() {
     }
   };
 
-  const handlePlayGame = async (game: Game) => {
+  const handlePlayGame = async (game: Game, launchFullscreen = false) => {
     // Increment plays locally
     const currentPlaysStr = typeof game.plays === 'string' ? game.plays : String(game.plays || '0');
     let currentPlays = parseInt(currentPlaysStr.replace(/[^0-9]/g, ''), 10) || 0;
@@ -2491,6 +2644,9 @@ export default function App() {
         setPlayingGame(game as any);
         setSelectedGame(null);
         toast.dismiss(toastId);
+        if (launchFullscreen) {
+          setTimeout(() => toggleFullscreen(), 350);
+        }
       } catch (err: any) {
         console.error(err);
         toast.error(`Error starting game: ${err.message}`, { id: toastId });
@@ -2594,63 +2750,35 @@ export default function App() {
       </AnimatePresence>
 
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-background/60 backdrop-blur-md border-b border-border">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
         <nav className="relative max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
           <a 
             href="#" 
             onClick={(e) => { e.preventDefault(); navigateTo("home"); }} 
-            className="flex items-center gap-2 shrink-0 group select-none cursor-pointer font-azymar-logo text-foreground"
+            className="flex items-center gap-2.5 shrink-0 group select-none cursor-pointer"
           >
             <div className="transition-transform duration-200 group-hover:scale-105">
-              <AzymarLogo size={46} />
+              <AzymarLogo size={36} />
             </div>
-            <span className="font-black text-2xl tracking-wide hidden sm:block transition-colors duration-150 group-hover:text-primary">
+            <span className="font-black text-xl tracking-wider text-slate-900 font-azymar-logo uppercase group-hover:text-teal-600 transition-colors">
               AZYMAR
             </span>
           </a>
 
-          {/* Nav links – desktop */}
-          <div className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            {navLinks.map((link) => (
-              <button
-                key={link}
-                onClick={() => {
-                  if (link === "Home") {
-                    navigateTo("home");
-                  } else if (link === "About") {
-                    setActiveLegalTab("about");
-                  } else if (link === "Trending") {
-                    navigateTo("home");
-                    setTimeout(() => {
-                      scrollToTrending();
-                    }, 100);
-                  } else {
-                    navigateTo("home");
-                    setTimeout(() => {
-                      scrollToGames();
-                    }, 100);
-                  }
-                }}
-                className="relative px-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors group cursor-pointer"
-              >
-                {link}
-                <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left rounded-full" />
-              </button>
-            ))}
-          </div>
+          {/* Nav links removed as requested */}
 
           {/* Right side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {/* Search */}
-            <div className="relative hidden sm:block">
+            <div className="relative">
               <AnimatePresence>
                 {searchOpen ? (
                   <motion.div
                     initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 220, opacity: 1 }}
+                    animate={{ width: 240, opacity: 1 }}
                     exit={{ width: 0, opacity: 0 }}
-                    className="overflow-hidden"
+                    className="overflow-hidden relative"
                   >
                     <input
                       autoFocus
@@ -2659,24 +2787,20 @@ export default function App() {
                         setSearchQuery(e.target.value);
                         scrollToGames();
                       }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          scrollToGames();
-                        }
-                      }}
                       onBlur={() => { if (!searchQuery) setSearchOpen(false); }}
                       placeholder="Search games..."
-                      className="w-full pl-9 pr-4 py-2 rounded-full text-sm border border-border bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      className="w-full pl-9 pr-4 py-1.5 rounded-full text-xs border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-teal-600 shadow-sm"
                     />
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   </motion.div>
                 ) : (
-                  <motion.button
+                  <button
                     onClick={() => setSearchOpen(true)}
-                    className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                    className="p-2 rounded-full hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                    title="Search"
                   >
-                    <Search size={18} />
-                  </motion.button>
+                    <Search size={19} />
+                  </button>
                 )}
               </AnimatePresence>
             </div>
@@ -2687,69 +2811,43 @@ export default function App() {
                   onClick={() => navigateTo("account")}
                   className="hidden md:flex flex-col items-end mr-1 cursor-pointer group"
                 >
-                  <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-teal-600 transition-colors">
                     {user.user_metadata?.full_name || user.email?.split('@')[0]}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">Player</span>
+                  <span className="text-[10px] text-slate-500">Player</span>
                 </div>
                 
                 {/* User Avatar */}
                 <div 
                   onClick={() => navigateTo("account")}
-                  className="w-9 h-9 rounded-full bg-primary/10 border border-border flex items-center justify-center font-bold text-primary text-sm overflow-hidden select-none cursor-pointer hover:border-primary transition-colors"
+                  className="w-8 h-8 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center font-bold text-teal-700 text-xs overflow-hidden cursor-pointer"
                 >
-                  {(() => {
-                    const src = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-                    const letter = (user.user_metadata?.full_name || user.email || "?").charAt(0).toUpperCase();
-                    return src ? (
-                      <div className="relative w-full h-full flex items-center justify-center">
-                        <img 
-                          src={src} 
-                          alt="" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            const fallback = e.currentTarget.nextSibling as HTMLElement;
-                            if (fallback) fallback.style.display = 'flex';
-                          }}
-                        />
-                        <span style={{ display: 'none' }} className="w-full h-full flex items-center justify-center font-bold text-primary">
-                          {letter}
-                        </span>
-                      </div>
-                    ) : (
-                      letter
-                    );
-                  })()}
+                  {(user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase()}
                 </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
                   onClick={handleSignOut}
-                  className="px-3 py-1.5 border border-border hover:border-red-500 hover:text-red-500 rounded-[2px] text-xs font-medium transition-colors cursor-pointer"
+                  className="px-3 py-1.5 border border-slate-300 hover:border-red-500 hover:text-red-600 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-red-50 transition-colors cursor-pointer"
                 >
                   Sign Out
-                </motion.button>
+                </button>
               </div>
             ) : null}
 
             {adminUnlocked && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={() => setShowAdmin(true)}
                 title="Admin Panel"
-                className="p-2 rounded-full transition-colors hidden sm:flex items-center justify-center bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer"
+                className="p-2 rounded-full bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors cursor-pointer"
               >
                 <ShieldCheck size={18} />
-              </motion.button>
+              </button>
             )}
 
-            {/* Mobile menu */}
+            {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenu(!mobileMenu)}
-              className="lg:hidden p-2 rounded-full hover:bg-muted transition-colors animate-pulse"
+              className="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
             >
               {mobileMenu ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -2763,30 +2861,21 @@ export default function App() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden border-t border-border bg-background overflow-hidden"
+              className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 flex flex-col gap-1"
             >
-              <div className="px-4 py-3 flex flex-col gap-1">
-                {navLinks.map((link) => (
-                  <button
-                    key={link}
-                    onClick={() => {
-                      setMobileMenu(false);
-                      if (link === "Home") {
-                        navigateTo("home");
-                      } else if (link === "About") {
-                        setActiveLegalTab("about");
-                      } else {
-                        setTimeout(() => {
-                          scrollToGames();
-                        }, 100);
-                      }
-                    }}
-                    className="text-left px-3 py-2.5 rounded-[2px] text-sm font-medium text-foreground hover:bg-muted hover:text-primary transition-colors"
-                  >
-                    {link}
-                  </button>
-                ))}
-              </div>
+              {[
+                { name: "Home", action: () => navigateTo("home") },
+                { name: "Games", action: () => { navigateTo("home"); scrollToGames(); } },
+                { name: "About", action: () => setActiveLegalTab("about") },
+              ].map((link) => (
+                <button
+                  key={link.name}
+                  onClick={() => { setMobileMenu(false); link.action(); }}
+                  className="text-left px-3 py-2 text-sm font-medium text-slate-700 hover:text-teal-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  {link.name}
+                </button>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
@@ -2805,234 +2894,411 @@ export default function App() {
         />
       ) : (
         <>
-          {/* ── Hero ───────────────────────────────────────────────────────────── */}
-          <section className="relative overflow-hidden pt-12 pb-16 neo-grid-bg">
+          {/* ── Top Hero Header Area with Playful Characters & Big Controller Wireframe ── */}
+          <section className="relative overflow-hidden pt-8 pb-10 bg-[#F8FAFC] border-b border-slate-200">
+            {/* Ambient Background Glow */}
+            <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Pacman-like Characters and New Images scattered around with custom paths and animations */}
+            {/* Floating retro animated characters */}
             {[
-              { type: "pacman", id: 0, style: { left: "6%", top: "12%" }, size: 140, duration: 6, delay: 0, animate: { y: [0, -15, 0], x: [0, 8, 0], rotate: [0, 3, -3, 0] } },
-              { type: "pacman", id: 1, style: { right: "8%", top: "18%" }, size: 120, duration: 5.5, delay: 0.5, animate: { y: [0, 12, 0], x: [0, -10, 0], rotate: [0, -4, 4, 0] } },
-              { type: "pacman", id: 2, style: { left: "14%", bottom: "10%" }, size: 110, duration: 7, delay: 0.2, animate: { y: [0, -8, 0], scale: [1, 1.05, 0.95, 1], rotate: [0, 5, -5, 0] } },
-              { type: "pacman", id: 3, style: { right: "12%", bottom: "15%" }, size: 130, duration: 6.5, delay: 0.8, animate: { y: [0, 10, 0], x: [0, 6, 0], rotate: [0, -3, 3, 0] } },
-              { type: "image", src: pixelCat, style: { left: "26%", top: "6%" }, size: 125, duration: 5, delay: 0.3, animate: { y: [0, -12, 0], rotate: [0, 6, -6, 0] } },
-              { type: "image", src: blackGamepad, style: { right: "22%", top: "8%" }, size: 130, duration: 8, delay: 0.1, animate: { y: [0, -10, 0], rotate: [0, 360] } },
-              { type: "image", src: bowlingStrike, style: { left: "42%", bottom: "5%" }, size: 130, duration: 7.5, delay: 0.6, animate: { y: [0, 15, 0], rotate: [0, 15, -15, 0], scale: [1, 1.06, 1] } },
-              { type: "image", src: omgBubble, style: { right: "38%", top: "12%" }, size: 150, duration: 6.2, delay: 0.4, animate: { scale: [1, 1.08, 0.92, 1], y: [0, -8, 0] } },
-              { type: "image", src: flamingEightball, style: { right: "26%", bottom: "8%" }, size: 125, duration: 6.8, delay: 0.7, animate: { y: [0, -15, 0], x: [0, 4, -4, 0], rotate: [0, 8, -8, 0] } },
+              { type: "pacman", id: 0, style: { left: "4%", top: "16%" }, size: 90, duration: 6, delay: 0, animate: { y: [0, -12, 0], x: [0, 6, 0], rotate: [0, 3, -3, 0] } },
+              { type: "pacman", id: 1, style: { left: "18%", top: "6%" }, size: 80, duration: 5.5, delay: 0.5, animate: { y: [0, 10, 0], x: [0, -8, 0], rotate: [0, -4, 4, 0] } },
+              { type: "image", src: pixelCat, style: { left: "32%", top: "8%" }, size: 95, duration: 5, delay: 0.3, animate: { y: [0, -10, 0], rotate: [0, 5, -5, 0] } },
+              { type: "image", src: flamingEightball, style: { left: "44%", bottom: "10%" }, size: 85, duration: 6.8, delay: 0.7, animate: { y: [0, -12, 0], x: [0, 4, -4, 0], rotate: [0, 8, -8, 0] } },
             ].map((char, index) => (
               <motion.div
                 key={index}
                 style={{ position: "absolute", ...char.style }}
                 animate={char.animate}
-                whileHover={char.type === "logo" ? { 
-                  scale: 1.3, 
-                  rotate: 360, 
-                  y: -20,
-                  filter: "drop-shadow(4px 4px 0px rgba(0,0,0,1)) drop-shadow(0 0 15px rgba(250, 204, 21, 0.6))"
-                } : { 
-                  scale: 1.25, 
-                  rotate: [0, -12, 12, -12, 0], 
-                  y: -15 
-                }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.2, rotate: [0, -10, 10, -10, 0], y: -10 }}
                 transition={{ 
                   y: { repeat: Infinity, duration: char.duration, ease: "easeInOut" },
                   x: { repeat: Infinity, duration: char.duration, ease: "easeInOut" },
-                  scale: { repeat: Infinity, duration: char.duration, ease: "easeInOut" },
-                  rotate: { repeat: Infinity, duration: char.animate.rotate?.[1] === 360 ? 15 : char.duration, ease: char.animate.rotate?.[1] === 360 ? "linear" : "easeInOut" },
                   delay: char.delay
                 }}
-                className="hidden sm:block z-10 pointer-events-auto filter drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] cursor-pointer"
+                className="hidden xl:block z-0 pointer-events-auto filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.15)] opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
               >
                 {char.type === "pacman" ? (
                   <PacmanCharacter id={char.id!} size={char.size} />
-                ) : char.type === "logo" ? (
-                  <AzymarLogo size={char.size} />
                 ) : (
                   <img src={char.src} alt="Arcade Asset" style={{ width: char.size, height: char.size, objectFit: "contain" }} />
                 )}
               </motion.div>
             ))}
 
-            <div className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-24 flex flex-col items-center text-center">
-              {/* Center content */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="flex flex-col items-center relative z-10"
-              >
-                <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black leading-tight text-black tracking-tight uppercase select-none">
-                  <motion.span 
-                    whileHover={{ scale: 1.1, rotate: -2, color: "#facc15" }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 12 }}
-                    className="inline-block cursor-pointer transition-colors duration-150"
-                  >
-                    PLAY.
-                  </motion.span>{" "}
-                  <motion.span 
-                    style={{ display: "inline-block", rotate: -1 }}
-                    whileHover={{ scale: 1.12, rotate: 2, y: -4 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                    className="bg-primary text-black px-6 py-2 border-4 border-black my-1 cursor-pointer origin-center"
-                  >
-                    ENJOY.
-                  </motion.span> <br />
-                  <motion.span 
-                    style={{ display: "inline-block", rotate: 1 }}
-                    whileHover={{ scale: 1.12, rotate: -2, y: -4 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                    className="bg-accent text-black px-6 py-2 border-4 border-black my-1 cursor-pointer origin-center"
-                  >
-                    REPEAT.
-                  </motion.span>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+              {/* Left Column: Heading + Subtitle + Filters */}
+              <div className="flex-1 w-full max-w-2xl">
+                {/* Decorative neon squiggles/shapes */}
+                <div className="flex items-center gap-2 mb-2 text-teal-600 text-xs font-mono">
+                  <span className="text-pink-500">⚡</span>
+                  <span className="tracking-widest uppercase text-slate-500 font-bold">Discover & Play Free</span>
+                </div>
+
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight">
+                  All Games
                 </h1>
-                <div className="w-[102vw] relative left-1/2 -translate-x-1/2 overflow-hidden bg-white border-y-4 border-black py-4 select-none flex z-10 -rotate-1 mt-12">
-                  <motion.div
-                    animate={{ x: ["0%", "-50%"] }}
-                    transition={{ repeat: Infinity, ease: "linear", duration: 16 }}
-                    className="flex whitespace-nowrap gap-12 text-3xl font-black uppercase tracking-widest text-black items-center"
-                    style={{ width: "fit-content" }}
-                  >
-                    <span className="shrink-0 flex items-center gap-12">
-                      AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY • AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY • AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY • AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY • AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY •
-                    </span>
-                    <span className="shrink-0 flex items-center gap-12">
-                      AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY • AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY • AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY • AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY • AZYMAR <AzymarLogo size={32} /> GAMES • FUN • PLAY •
-                    </span>
-                  </motion.div>
+                <p className="mt-2.5 text-slate-600 text-sm sm:text-base leading-relaxed">
+                  Discover our collection of fun and exciting games. Play instantly in your browser with zero downloads.
+                </p>
+
+                {/* Search Bar */}
+                <div className="mt-6 flex items-center">
+                  <div className="relative flex-1 max-w-md">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search games..."
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:border-teal-600 shadow-sm transition-colors"
+                    />
+                  </div>
                 </div>
-              </motion.div>
-            </div>
 
-            {/* Gradient blend transition at the bottom of Hero */}
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-black pointer-events-none" />
-          </section>
-
-          {/* ── Games & Features Section (Dark Grid) ─────────────────────────── */}
-          <div className="w-full bg-black border-b-3 border-black neo-grid-dark relative z-10">
-            {/* Gradient blend transition at the top of Games section */}
-            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black to-transparent pointer-events-none z-10" />
-
-            {/* ── Popular Games ───────────────────────────────────────────────────── */}
-            <section ref={gamesRef} className="max-w-7xl mx-auto px-4 sm:px-6 py-16 scroll-mt-20 relative z-20">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight text-white">
-                    {activeCategory ? `${activeCategory} Games` : "Our Games"}
-                  </h2>
-                  {activeCategory && (
+                {/* Quick Trending Tags */}
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-slate-400 font-medium flex items-center gap-1 text-[11px]">
+                    <Flame size={12} className="text-amber-500" /> Popular:
+                  </span>
+                  {["Action", "Arcade", "Puzzle", "Racing"].map((tag) => (
                     <button
-                      onClick={() => setActiveCategory(null)}
-                      className="text-xs text-primary mt-1 hover:underline cursor-pointer"
+                      key={tag}
+                      onClick={() => {
+                        setActiveCategory(activeCategory === tag ? null : tag);
+                        gamesRef.current?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
+                        activeCategory === tag
+                          ? "bg-teal-600 text-white shadow-xs"
+                          : "bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-600 text-slate-600 shadow-xs"
+                      }`}
                     >
-                      ← Back to all games
+                      {tag}
                     </button>
-                  )}
+                  ))}
                 </div>
-                {searchOpen && searchQuery && (
-                  <span className="text-sm text-neutral-400">{visibleGames.length} results for "{searchQuery}"</span>
-                )}
-                <button className="text-sm text-primary font-semibold flex items-center gap-1 hover:underline cursor-pointer">
-                  View All <ArrowRight size={14} />
-                </button>
               </div>
 
-              {visibleGames.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {visibleGames.map((game) => (
-                    <GameCard
-                      key={game.id}
-                      game={game}
-                      onPlay={setSelectedGame}
-                      isAdmin={adminUnlocked}
-                      onAdminDelete={handleDeleteUpload}
-                      isFavorite={favorites.includes(game.id)}
-                      onToggleFavorite={toggleFavorite}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-20 text-neutral-500">
-                  <Gamepad2 size={40} className="mx-auto mb-3 opacity-30" />
-                  <p>No games found for "{searchQuery}"</p>
-                </div>
-              )}
-            </section>
+              {/* Right Column: Innovative Interactive Arcade Hub */}
+              <div className="w-full lg:w-auto shrink-0 flex justify-center lg:justify-end">
+                <div className="w-full sm:w-[380px] lg:w-[420px] bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/60 p-5 relative overflow-hidden transition-all hover:shadow-2xl hover:border-teal-300">
+                  {/* Top glowing accent gradient bar */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-500" />
+                  
+                  {/* Header bar inside card */}
+                  <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 text-[11px] font-bold uppercase tracking-wider border border-teal-100">
+                        <Sparkles size={12} className="text-teal-500 fill-teal-500" />
+                        Daily Spotlight
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      <span className="text-[11px] font-medium text-slate-500">Free Instant Play</span>
+                    </div>
+                  </div>
 
-            {/* ── Recommended For You ─────────────────────────────────────────────── */}
-            {RECOMMENDED.length > 0 && (
-              <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 relative z-20">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2 mb-6">
-                  <Trophy size={22} className="text-primary" /> Recommended For You
-                </h2>
-                <div className="grid sm:grid-cols-3 gap-5">
-                  {RECOMMENDED.map((r) => (
-                    <div
-                      key={r.id}
-                      className="bg-card border-3 border-black rounded-none p-5 cursor-pointer neo-shadow neo-card-hover transition-all duration-200"
-                    >
-                      <div className="flex items-center gap-4 mb-4">
-                        <div
-                          className="w-14 h-14 rounded-none border-2 border-black flex items-center justify-center text-3xl shrink-0"
-                          style={{ background: `${r.color}22` }}
+                  {/* Body: Spotlight Game or Arcade Showcase */}
+                  {spotlightGame ? (
+                    <div className="mt-4 space-y-4">
+                      <div className="flex items-center gap-3.5 group cursor-pointer" onClick={() => setSelectedGame(spotlightGame)}>
+                        <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 shadow-xs">
+                          {spotlightGame.thumbnailUrl ? (
+                            <img
+                              src={spotlightGame.thumbnailUrl}
+                              alt={spotlightGame.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-3xl">
+                              {spotlightGame.emoji || "🎮"}
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 flex items-center justify-center transition-colors">
+                            <div className="w-8 h-8 rounded-full bg-white/90 text-teal-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                              <Play size={14} className="fill-current ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-600">
+                              {spotlightGame.genre}
+                            </span>
+                            {spotlightGame.badge && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wide bg-amber-100 text-amber-700">
+                                {spotlightGame.badge}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-sm font-bold text-slate-900 group-hover:text-teal-600 transition-colors truncate">
+                            {spotlightGame.title}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500">
+                            <div className="flex items-center gap-1 text-amber-500 font-semibold">
+                              <Star size={12} className="fill-amber-400 text-amber-400" />
+                              <span>{spotlightGame.rating}</span>
+                            </div>
+                            <span className="text-slate-300">•</span>
+                            <span className="flex items-center gap-1">
+                              <Users size={12} className="text-slate-400" />
+                              <span>{spotlightGame.plays || "1.2k"} plays</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Interactive Action CTA Buttons */}
+                      <div className="grid grid-cols-2 gap-2.5 pt-1">
+                        <button
+                          onClick={() => setSelectedGame(spotlightGame)}
+                          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-teal-500/20 active:scale-95 transition-all cursor-pointer"
                         >
-                          {r.emoji}
+                          <Play size={13} className="fill-white" />
+                          <span>Play Spotlight</span>
+                        </button>
+                        <button
+                          onClick={handleRandomGame}
+                          disabled={isRolling}
+                          className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-200/80 active:scale-95 transition-all cursor-pointer"
+                        >
+                          <motion.div animate={isRolling ? { rotate: 360 } : {}} transition={{ repeat: isRolling ? Infinity : 0, duration: 0.3 }}>
+                            <Dices size={14} className="text-teal-600" />
+                          </motion.div>
+                          <span>{isRolling ? "Rolling..." : "Surprise Me 🎲"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 space-y-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-teal-500/10 to-indigo-500/10 border border-teal-500/20 flex items-center justify-center text-3xl">
+                          🎮
                         </div>
                         <div>
-                          <h3 className="font-bold text-white">{r.title}</h3>
-                          <p className="text-sm text-neutral-400">{r.genre}</p>
+                          <h3 className="text-sm font-bold text-slate-900">Instant Arcade Ready</h3>
+                          <p className="text-xs text-slate-500 mt-0.5">Click below to upload or explore newly added web games!</p>
                         </div>
                       </div>
-                      <div className="mb-3">
-                        <div className="flex justify-between text-xs text-neutral-400 mb-1.5">
-                          <span>Progress</span>
-                          <span className="text-primary font-semibold">{r.progress}%</span>
-                        </div>
-                        <div className="h-2.5 bg-muted border-2 border-black rounded-none overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${r.progress}%` }}
-                            transition={{ duration: 1, delay: 0.3 }}
-                            className="h-full bg-primary"
-                          />
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => toast(`Resuming ${r.title}...`)}
-                        className="w-full py-2 bg-primary text-primary-foreground border-2 border-black rounded-none text-xs font-black uppercase tracking-wider neo-btn neo-btn-hover flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Clock size={13} /> Continue Playing
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
-            {/* Gradient blend transition at the bottom of Games section to blend into solid black */}
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent pointer-events-none z-10" />
+                      <div className="grid grid-cols-2 gap-2.5 pt-1">
+                        <button
+                          onClick={() => {
+                            if (adminUnlocked) setShowAdmin(true);
+                            else gamesRef.current?.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-teal-500/20 active:scale-95 transition-all cursor-pointer"
+                        >
+                          {adminUnlocked ? <Upload size={13} /> : <Gamepad2 size={13} />}
+                          <span>{adminUnlocked ? "Upload Game" : "Explore Games"}</span>
+                        </button>
+                        <button
+                          onClick={handleRandomGame}
+                          className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-200/80 active:scale-95 transition-all cursor-pointer"
+                        >
+                          <Dices size={14} className="text-teal-600" />
+                          <span>Surprise Me 🎲</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Micro feature pills / specs */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
+                    <div className="p-1.5 rounded-lg bg-slate-50">
+                      <div className="text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1">
+                        <Zap size={11} className="text-amber-500 fill-amber-500" /> 0s Load
+                      </div>
+                      <div className="text-[9px] text-slate-400">Instant HTML5</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-slate-50">
+                      <div className="text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1">
+                        <Gamepad2 size={11} className="text-teal-500" /> 100% Free
+                      </div>
+                      <div className="text-[9px] text-slate-400">No Downloads</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-slate-50">
+                      <div className="text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1">
+                        <Trophy size={11} className="text-indigo-500" /> Cloud
+                      </div>
+                      <div className="text-[9px] text-slate-400">Progress Saved</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── Main Dashboard Layout: Sidebar + Games Grid ── */}
+          <div className="w-full bg-[#F8FAFC] min-h-screen py-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                {/* ── Left Sidebar (Categories, Top Rated, Request Box) ── */}
+                <aside className="lg:col-span-3 space-y-6">
+                  {/* Categories Card */}
+                  <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
+                      Categories
+                    </h3>
+                    <div className="space-y-1">
+                      {dynamicSidebarCategories.map((cat) => {
+                        const isSelected = (!activeCategory && cat.name === "All Games") || (activeCategory === cat.name);
+                        const Icon = cat.icon;
+                        return (
+                          <button
+                            key={cat.name}
+                            onClick={() => setActiveCategory(cat.name === "All Games" ? null : cat.name)}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                              isSelected
+                                ? "bg-teal-50 text-teal-700 font-semibold border border-teal-200"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Icon size={15} className={isSelected ? "text-teal-600" : "text-slate-400"} />
+                              <span>{cat.name}</span>
+                            </div>
+                            <span className={`text-[11px] px-1.5 py-0.5 rounded ${
+                              isSelected ? "text-teal-700 bg-teal-100/70" : "text-slate-500 bg-slate-100"
+                            }`}>
+                              {cat.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Top Rated Games Card */}
+                  <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
+                      Top Rated
+                    </h3>
+                    <div className="space-y-3.5">
+                      {allGames.slice(0, 5).map((tr) => (
+                        <div
+                          key={tr.id}
+                          onClick={() => setSelectedGame(tr)}
+                          className="flex items-center gap-3 group cursor-pointer"
+                        >
+                          {tr.thumbnailUrl ? (
+                            <img
+                              src={tr.thumbnailUrl}
+                              alt={tr.title}
+                              className="w-10 h-10 rounded-lg object-cover border border-slate-200 group-hover:border-teal-500/50 transition-colors"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-lg">
+                              {tr.emoji || "🎮"}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-semibold text-slate-800 group-hover:text-teal-600 truncate transition-colors">
+                              {tr.title}
+                            </h4>
+                            <div className="flex items-center gap-1 mt-0.5 text-[11px] text-amber-500">
+                              <Star size={10} className="fill-amber-400 text-amber-400" />
+                              <span>{tr.rating}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {allGames.length === 0 && (
+                        <p className="text-xs text-slate-400 py-2">No games uploaded yet.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Can't find your game? Request a Game Card */}
+                  <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm text-center relative overflow-hidden group">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600 text-xl">
+                      🎮
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 mb-1.5">
+                      Can't find your game?
+                    </h4>
+                    <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+                      Request a game and we'll add it to our collection!
+                    </p>
+                    <button
+                      onClick={() => {
+                        window.location.href = "mailto:azymar03@gmail.com?subject=Game%20Request";
+                      }}
+                      className="w-full py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Request a Game
+                    </button>
+                  </div>
+                </aside>
+
+                {/* ── Main Content Area: Games 4-Column Grid ── */}
+                <main className="lg:col-span-9 space-y-8" ref={gamesRef}>
+                  {visibleGames.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+                        {visibleGames.map((game) => (
+                          <GameCard
+                            key={game.id}
+                            game={game}
+                            onPlay={setSelectedGame}
+                            isAdmin={adminUnlocked}
+                            onAdminDelete={handleDeleteUpload}
+                            isFavorite={favorites.includes(game.id)}
+                            onToggleFavorite={toggleFavorite}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Pagination Bar */}
+                      <div className="flex items-center justify-center gap-2 pt-8">
+                        <button className="w-8 h-8 rounded-lg bg-[#2DD4BF] text-[#021F1B] font-bold text-xs flex items-center justify-center cursor-pointer shadow-sm">
+                          1
+                        </button>
+                        <button className="w-8 h-8 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-medium text-xs flex items-center justify-center border border-slate-200 transition-colors cursor-pointer shadow-sm">
+                          2
+                        </button>
+                        <button className="w-8 h-8 rounded-lg bg-white hover:bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200 transition-colors cursor-pointer shadow-sm">
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-24 bg-white rounded-xl border border-slate-200 text-slate-500 shadow-sm">
+                      <Gamepad2 size={44} className="mx-auto mb-3 opacity-40 text-teal-600" />
+                      <p className="font-semibold text-slate-900">No games found</p>
+                      <p className="text-xs text-slate-500 mt-1">Try adjusting your search query or selected category.</p>
+                    </div>
+                  )}
+                </main>
+
+              </div>
+            </div>
           </div>
         </>
       )}
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="bg-black border-t-3 border-black text-white py-14 relative z-10">
+      <footer className="bg-white border-t border-slate-200 text-slate-900 py-14 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10">
             {/* Brand */}
             <div className="lg:col-span-2">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2.5 mb-3">
                 <AzymarLogo size={36} />
-                <span className="font-black text-xl text-white font-azymar-logo">AZYMAR</span>
+                <span className="font-black text-xl text-slate-900 font-azymar-logo uppercase tracking-wider">AZYMAR</span>
               </div>
-              <p className="text-sm text-neutral-400 leading-relaxed max-w-xs">
+              <p className="text-xs text-slate-600 leading-relaxed max-w-xs">
                 Your ultimate destination for free online gaming. Play, discover, and connect with millions of gamers worldwide.
               </p>
-              <div className="flex gap-3 mt-5">
+              <div className="flex gap-2.5 mt-5">
                 {[
                   { icon: Linkedin, label: "LinkedIn", url: "https://www.linkedin.com/company/azymar/" },
                   { icon: (props: { size: number }) => (
@@ -3040,7 +3306,7 @@ export default function App() {
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                   ), label: "X", url: "https://x.com/azymar03" },
-                  { icon: Instagram, label: "Instagram", url: "https://www.instagram.com/azymar_studio_01?igsh=dngzeW16Y29kZDJ4" },
+                  { icon: Instagram, label: "Instagram", url: "https://www.instagram.com/azymar_studios/" },
                 ].map((s) => (
                   <motion.a
                     key={s.label}
@@ -3048,9 +3314,9 @@ export default function App() {
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.1, y: -2 }}
-                    className="w-9 h-9 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400 hover:bg-primary hover:text-black transition-colors"
+                    className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-teal-600 hover:border-teal-400/50 transition-colors"
                   >
-                    <s.icon size={16} />
+                    <s.icon size={15} />
                   </motion.a>
                 ))}
               </div>
@@ -3059,7 +3325,7 @@ export default function App() {
             {/* Links */}
             {[
               {
-                title: "Company",
+                title: "COMPANY",
                 links: [
                   { icon: BookOpen, label: "About" },
                   { icon: Shield, label: "Privacy" },
@@ -3068,7 +3334,7 @@ export default function App() {
                 ],
               },
               {
-                title: "Support",
+                title: "SUPPORT",
                 links: [
                   { icon: HelpCircle, label: "FAQ" },
                   { icon: Mail, label: "Contact" },
@@ -3078,7 +3344,7 @@ export default function App() {
               },
             ].map((col) => (
               <div key={col.title}>
-                <h4 className="font-bold text-white mb-4">{col.title}</h4>
+                <h4 className="text-xs font-bold text-slate-800 tracking-wider mb-4 uppercase">{col.title}</h4>
                 <ul className="space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.label}>
@@ -3095,22 +3361,17 @@ export default function App() {
                           ) {
                             setActiveLegalTab(label as any);
                             if (label === "contact") {
-                              window.location.href = "mailto:azymar03@gmmail.com";
+                              window.location.href = "mailto:azymar03@gmail.com";
                             }
                           } else if (label === "discord") {
                             window.open("https://discord.com/channels/1523952210780880936/1523952211225215079", "_blank");
                           } else if (label === "games") {
-                            const target = document.getElementById("games-list");
-                            if (target) {
-                              target.scrollIntoView({ behavior: "smooth" });
-                            } else {
-                              gamesRef.current?.scrollIntoView({ behavior: "smooth" });
-                            }
+                            gamesRef.current?.scrollIntoView({ behavior: "smooth" });
                           }
                         }}
-                        className="flex items-center gap-2 text-sm text-neutral-400 hover:text-primary transition-colors cursor-pointer"
+                        className="flex items-center gap-2 text-xs text-slate-600 hover:text-teal-600 transition-colors cursor-pointer"
                       >
-                        <l.icon size={14} /> {l.label}
+                        <l.icon size={13} className="text-slate-400" /> {l.label}
                       </button>
                     </li>
                   ))}
@@ -3120,19 +3381,19 @@ export default function App() {
 
             {/* Newsletter */}
             <div>
-              <h4 className="font-bold text-white mb-4">Newsletter</h4>
-              <p className="text-sm text-neutral-400 mb-3">Get the latest games and updates.</p>
+              <h4 className="text-xs font-bold text-slate-800 tracking-wider mb-4 uppercase">NEWSLETTER</h4>
+              <p className="text-xs text-slate-600 mb-3 leading-relaxed">Get the latest games and updates.</p>
               <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="px-4 py-2.5 rounded-none text-sm border-3 border-black bg-white text-black placeholder:text-neutral-500 focus:outline-none focus:bg-yellow-50 [box-shadow:2px_2px_0px_0px_#000000] focus:translate-x-[-1px] focus:translate-y-[-1px] focus:[box-shadow:3px_3px_0px_0px_#000000] transition-all"
+                  className="px-3.5 py-2 rounded-lg text-xs border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 transition-colors shadow-sm"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2.5 bg-primary text-black rounded-none text-xs font-black uppercase tracking-wider neo-btn neo-btn-hover cursor-pointer"
+                  className="px-4 py-2 bg-[#2DD4BF] hover:bg-[#14B8A6] text-[#021F1B] rounded-lg text-xs font-bold transition-all shadow-md shadow-teal-500/10 cursor-pointer active:scale-95"
                 >
                   Subscribe
                 </button>
@@ -3140,7 +3401,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-10 pt-6 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400">
+          <div className="mt-12 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
             <p>© 2026 AZYMAR. All rights reserved.</p>
             <p>Made with ❤️ for gamers worldwide</p>
           </div>
@@ -3213,7 +3474,7 @@ export default function App() {
                     <Heart size={16} className={favorites.includes(selectedGame.id) ? "fill-red-600 text-red-600" : ""} />
                   </button>
                   <button
-                    onClick={() => handlePlayGame(selectedGame)}
+                    onClick={() => handlePlayGame(selectedGame, true)}
                     title="Launch Fullscreen"
                     className="w-12 h-12 bg-white text-black border-3 border-black rounded-none flex items-center justify-center neo-btn neo-btn-hover cursor-pointer"
                   >
@@ -3251,44 +3512,72 @@ export default function App() {
       <AnimatePresence>
         {activePlayUrl && (
           <motion.div
+            ref={playerContainerRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 top-0 left-0 w-screen h-screen z-50 flex flex-col bg-black animate-in fade-in duration-300"
+            className="fixed inset-0 top-0 left-0 w-screen h-screen z-50 flex flex-col bg-slate-950 animate-in fade-in duration-300"
           >
             {/* Header bar */}
-            <div className="h-14 bg-card border-b-3 border-black flex items-center justify-between px-6 shrink-0 z-10">
+            <div className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 shrink-0 z-10 shadow-sm">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{playingGame?.emoji}</span>
-                <div>
-                  <h2 className="font-black text-foreground text-sm uppercase tracking-wide">{playingGame?.title}</h2>
-                  <p className="text-[10px] text-muted-foreground uppercase font-semibold">{playingGame?.genre}</p>
+                <div className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-xl shrink-0">
+                  {playingGame?.emoji || "🎮"}
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-bold text-slate-900 text-sm truncate max-w-[170px] sm:max-w-xs">{playingGame?.title}</h2>
+                  <p className="text-[10px] text-teal-600 font-semibold uppercase tracking-wider">{playingGame?.genre}</p>
                 </div>
               </div>
               
-              <button
-                onClick={() => {
-                  if (activePlayUrl) {
-                    URL.revokeObjectURL(activePlayUrl);
-                  }
-                  setActivePlayUrl(null);
-                  setGameToRate(playingGame);
-                  setPlayingGame(null);
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground border-2 border-black rounded-none text-xs font-black uppercase tracking-wider neo-btn neo-btn-hover cursor-pointer"
-              >
-                Exit Game
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Full Screen Toggle Option */}
+                <button
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "Exit Full Screen (F)" : "Enter Full Screen (F)"}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer ${
+                    isFullscreen
+                      ? "bg-slate-800 hover:bg-slate-700 text-white"
+                      : "bg-[#2DD4BF] hover:bg-[#14B8A6] text-[#021F1B] shadow-teal-500/20"
+                  }`}
+                >
+                  {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                  <span className="hidden sm:inline">{isFullscreen ? "Exit Fullscreen" : "Full Screen"}</span>
+                </button>
+
+                {/* Exit Game Button */}
+                <button
+                  onClick={handleExitGame}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                >
+                  <X size={14} />
+                  <span>Exit</span>
+                </button>
+              </div>
             </div>
 
             {/* Iframe container */}
-            <div className="w-full h-[calc(100vh-3.5rem)] bg-black relative overflow-hidden">
+            <div className="w-full flex-1 bg-black relative overflow-hidden flex items-center justify-center">
               <iframe
                 src={activePlayUrl}
-                className="w-full h-full border-none bg-white"
+                className="w-full h-full border-none bg-black"
                 sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups"
-                allow="autoplay; fullscreen; keyboard"
+                allow="autoplay; fullscreen *; gamepad; keyboard"
+                allowFullScreen={true}
               />
+
+              {/* Floating Fullscreen Toggle Button in bottom-right corner for quick access */}
+              <button
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+                className="absolute bottom-4 right-4 z-20 p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white backdrop-blur-md border border-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer group"
+              >
+                {isFullscreen ? (
+                  <Minimize2 size={18} className="group-hover:text-teal-400 transition-colors" />
+                ) : (
+                  <Maximize2 size={18} className="group-hover:text-teal-400 transition-colors" />
+                )}
+              </button>
             </div>
           </motion.div>
         )}
