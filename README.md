@@ -133,9 +133,12 @@ The platform requires a `games` table and a `game-files` storage bucket in Supab
 
 ## 🌐 Community & Socials
 
+- **LinkedIn**: [AZYMAR Posts](https://www.linkedin.com/company/azymar/posts/?feedView=all)
 - **Instagram**: [@azymar_studios](https://www.instagram.com/azymar_studios/)
+- **WhatsApp Channel**: [AZYMAR Channel](http://whatsapp.com/channel/0029Vb7UvOFIN9iemhBqrU0q)
 - **X (Twitter)**: [@azymar03](https://x.com/azymar03)
-- **LinkedIn**: [AZYMAR](https://www.linkedin.com/company/azymar/)
+- **YouTube**: [@AZYMAR-GAMERS](https://www.youtube.com/@AZYMAR-GAMERS)
+- **Discord**: [Join AZYMAR Discord](https://discord.gg/dnAXsrr8A)
 
 ---
 
