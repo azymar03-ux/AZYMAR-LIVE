@@ -2894,38 +2894,11 @@ export default function App() {
         />
       ) : (
         <>
-          {/* ── Top Hero Header Area with Playful Characters & Big Controller Wireframe ── */}
+          {/* ── Top Hero Header Area ── */}
           <section className="relative overflow-hidden pt-8 pb-10 bg-[#F8FAFC] border-b border-slate-200">
             {/* Ambient Background Glow */}
             <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl pointer-events-none" />
-
-            {/* Floating retro animated characters */}
-            {[
-              { type: "pacman", id: 0, style: { left: "4%", top: "16%" }, size: 90, duration: 6, delay: 0, animate: { y: [0, -12, 0], x: [0, 6, 0], rotate: [0, 3, -3, 0] } },
-              { type: "pacman", id: 1, style: { left: "18%", top: "6%" }, size: 80, duration: 5.5, delay: 0.5, animate: { y: [0, 10, 0], x: [0, -8, 0], rotate: [0, -4, 4, 0] } },
-              { type: "image", src: pixelCat, style: { left: "32%", top: "8%" }, size: 95, duration: 5, delay: 0.3, animate: { y: [0, -10, 0], rotate: [0, 5, -5, 0] } },
-              { type: "image", src: flamingEightball, style: { left: "44%", bottom: "10%" }, size: 85, duration: 6.8, delay: 0.7, animate: { y: [0, -12, 0], x: [0, 4, -4, 0], rotate: [0, 8, -8, 0] } },
-            ].map((char, index) => (
-              <motion.div
-                key={index}
-                style={{ position: "absolute", ...char.style }}
-                animate={char.animate}
-                whileHover={{ scale: 1.2, rotate: [0, -10, 10, -10, 0], y: -10 }}
-                transition={{ 
-                  y: { repeat: Infinity, duration: char.duration, ease: "easeInOut" },
-                  x: { repeat: Infinity, duration: char.duration, ease: "easeInOut" },
-                  delay: char.delay
-                }}
-                className="hidden xl:block z-0 pointer-events-auto filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.15)] opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-              >
-                {char.type === "pacman" ? (
-                  <PacmanCharacter id={char.id!} size={char.size} />
-                ) : (
-                  <img src={char.src} alt="Arcade Asset" style={{ width: char.size, height: char.size, objectFit: "contain" }} />
-                )}
-              </motion.div>
-            ))}
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
               {/* Left Column: Heading + Subtitle + Filters */}
